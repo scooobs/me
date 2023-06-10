@@ -18,7 +18,7 @@ export const Section: React.FC<ISectionProps> = ({ sectionName }) => {
 
     const { cards } = sectionData.section;
 
-    return cards.map((c) => <Card key={c.id} card={c} />);
+    return cards.map((c) => <Card key={c.id} id={c.id} />);
   }, [sectionData]);
 
   return (

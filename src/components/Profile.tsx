@@ -1,4 +1,6 @@
-export const Profile: React.FC<> = () => {
+import React from "react";
+
+export const Profile: React.FC = () => {
   return (
     <div className="flex flex-1 flex-col">
       <div className="font-semibold">Conal O&rsquo;Leary</div>

@@ -1,12 +1,12 @@
 import { useSession } from "next-auth/react";
 import React from "react";
 import { z } from "zod";
-import type { CardSelectionType } from "~/server/api/routers/section";
 import { api } from "~/utils/api";
+
 import { TextArea } from "./wrappers/TextArea";
 
 interface ICardProps {
-  card: CardSelectionType;
+  id: string;
 }
 
 const formSchema = z.object({
@@ -16,12 +16,28 @@ const formSchema = z.object({
   body: z.string(),
 });
 
-export const Card: React.FC<ICardProps> = ({ card }) => {
+export const Card: React.FC<ICardProps> = ({ id }) => {
   const { data: session } = useSession();
+  const { data: cardData } = api.card.getCard.useQuery({
+    id,
+  });
+
   const [isEditing, setIsEditing] = React.useState<boolean>(false);
   const [isHovering, setIsHovering] = React.useState<boolean>(false);
   const mutation = api.card.updateCard.useMutation();
 
+  const title = React.useMemo(
+    () => (cardData && cardData.card ? cardData.card.title : ""),
+    [cardData]
+  );
+  const subTitle = React.useMemo(
+    () => (cardData && cardData.card?.subTitle ? cardData.card.subTitle : ""),
+    [cardData]
+  );
+  const body = React.useMemo(
+    () => (cardData && cardData.card ? cardData.card.body : ""),
+    [cardData]
+  );
   const canEdit = React.useMemo(
     () => session?.user.role === "ADMIN",
     [session]
@@ -64,38 +80,39 @@ export const Card: React.FC<ICardProps> = ({ card }) => {
 
   const uneditableCard = (
     <>
-      <div className="text-sm font-semibold ">{card.title}</div>
-      <div className="text-xs opacity-70">{card.subTitle}</div>
-      <div className="pt-2 text-sm">{card.body}</div>
+      <div className="text-sm font-semibold ">{title}</div>
+      <div className="text-xs opacity-70">{subTitle}</div>
+      <div className="pt-2 text-sm">{body}</div>
     </>
   );
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    const form = e.target;
+    const form = e.currentTarget;
     const formData = new FormData(form);
     const formObject = formSchema.parse(Object.fromEntries(formData.entries()));
     mutation.mutate(formObject);
+    setIsEditing(false);
   }
 
   const editableCard = (
     <>
-      <input type="hidden" name={"id"} value={card.id} />
+      <input type="hidden" name={"id"} value={id} />
       <TextArea
         name={"title"}
         className="border-0 bg-transparent text-sm font-semibold outline-0"
-        defaultValue={card.title}
+        defaultValue={title}
       />
       <TextArea
         name={"subTitle"}
         className="border-0 bg-transparent text-xs opacity-70 outline-0"
-        defaultValue={card.subTitle}
+        defaultValue={subTitle}
       />
       <TextArea
         name={"body"}
         className="border-0 bg-transparent pt-2 text-sm outline-0"
-        defaultValue={card.body}
+        defaultValue={body}
       />
     </>
   );

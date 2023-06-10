@@ -3,19 +3,13 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { prisma } from "~/server/db";
 
-const defaultCardSelection = Prisma.validator<Prisma.CardSelect>()({
+const cardIdSelector = Prisma.validator<Prisma.CardSelect>()({
   id: true,
-  sectionId: true,
-  title: true,
-  subTitle: true,
-  body: true,
 });
-
-export type CardSelectionType = typeof defaultCardSelection;
 
 const defaultSectionSelector = Prisma.validator<Prisma.SectionSelect>()({
   id: true,
-  cards: { select: defaultCardSelection },
+  cards: { select: cardIdSelector },
 });
 
 export const sectionRouter = createTRPCRouter({
