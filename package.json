@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "vercel-build": "prisma generate && prisma db push && next build",
     "build": "next build",
     "db-seed": "NODE_ENV=development prisma db seed",
     "dev": "next dev",
