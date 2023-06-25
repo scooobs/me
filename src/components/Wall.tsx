@@ -3,15 +3,16 @@ import Link from "next/link";
 import React from "react";
 import { api } from "~/utils/api";
 import { Post } from "./Post";
-import type { User } from "@prisma/client";
+import {
+  type GetPostOutput,
+  type GetProtectedPostOutput,
+} from "~/server/api/routers/post";
 
 export const Wall: React.FC = () => {
   const { data: session, status } = useSession();
 
   const { data: publicPosts } = api.post.getPosts.useQuery();
   const { data: protectedPosts } = api.post.getProtectedPosts.useQuery();
-
-  const createPost = api.post.createPost.useMutation();
 
   const [showInvisiblePosts, setShowInvisiblePosts] =
     React.useState<boolean>(false);
@@ -21,24 +22,18 @@ export const Wall: React.FC = () => {
     () => status === "unauthenticated",
     [status]
   );
+  const isAdmin = React.useMemo(
+    () => session?.user.role === "ADMIN",
+    [session]
+  );
 
   const [myPost, basePosts] = React.useMemo(() => {
     const derivedPublicPosts = publicPosts
       ? publicPosts
-      : ([] as {
-          user: User;
-          id: string;
-          body: string;
-          createdAt: Date;
-        }[]);
+      : ([] as GetPostOutput);
     const derivedProtectedPosts = protectedPosts
       ? protectedPosts
-      : ([] as {
-          user: User;
-          id: string;
-          body: string;
-          createdAt: Date;
-        }[]);
+      : ([] as GetProtectedPostOutput);
     const basePosts = showInvisiblePosts
       ? [...derivedPublicPosts, ...derivedProtectedPosts].sort(
           (a, b) => b.createdAt.valueOf() - a.createdAt.valueOf()
@@ -73,6 +68,42 @@ export const Wall: React.FC = () => {
     return filteredPosts.map((p) => <Post key={p.id} post={p} />);
   }, [filteredPosts]);
 
+  const onChangeHandler: React.ChangeEventHandler<HTMLInputElement> =
+    React.useCallback((e) => {
+      setSearchResult(e.target.value);
+    }, []);
+
+  const showInvisiblePostsOnClick: React.MouseEventHandler<HTMLDivElement> =
+    React.useCallback((_) => setShowInvisiblePosts((s) => !s), []);
+
+  const controls = React.useMemo(() => {
+    const filterPostColors = showInvisiblePosts
+      ? "bg-green-400 shadow-green-300"
+      : "bg-red-400 shadow-red-300";
+
+    return (
+      <div className="flex flex-row items-center gap-4">
+        <div className="flex flex-1 flex-row gap-2 rounded-md bg-[#D9D9D9] bg-opacity-50 px-1 py-1">
+          <span>🔍</span>
+          <input
+            className="flex-1 bg-transparent text-[#593E3E]  outline-none"
+            onChange={onChangeHandler}
+          />
+        </div>
+        {isAdmin && (
+          <div
+            onClick={showInvisiblePostsOnClick}
+            className={
+              "cursor-pointer rounded-full shadow-md " + filterPostColors
+            }
+          >
+            👮‍♂️
+          </div>
+        )}
+      </div>
+    );
+  }, [isAdmin, onChangeHandler, showInvisiblePosts, showInvisiblePostsOnClick]);
+
   if (notAuthenticated) {
     return (
       <div>
@@ -81,18 +112,11 @@ export const Wall: React.FC = () => {
     );
   }
 
-  // Load Posts sorted by post date
-
-  // If not signed in send to sign up
-
-  // If I've posted show it first and allow me to edit it
-  // else add an empty thing that lets me post
-
-  // Don't allow me to post twice
-
+  // todo: make prettier
   return (
-    <div>
-      {myPost && <Post key={myPost.id} post={myPost} />}
+    <div className="flex flex-col gap-4">
+      {controls}
+      {myPost ? <Post key={myPost.id} post={myPost} /> : <Post />}
       {posts}
     </div>
   );

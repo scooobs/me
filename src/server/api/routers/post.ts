@@ -7,12 +7,14 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { prisma } from "~/server/db";
+import { type RouterOutputs } from "~/utils/api";
 
 const defaultPostSelector = Prisma.validator<Prisma.PostSelect>()({
   id: true,
   body: true,
   user: true,
   createdAt: true,
+  updatedAt: true,
 });
 
 export const postRouter = createTRPCRouter({
@@ -76,26 +78,42 @@ export const postRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        userId: z.string(),
         body: z.string(),
-        visible: z.boolean().nullable(),
+        visible: z.boolean().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
+      const { id, body, visible } = input;
       const user = ctx.session.user;
-      if (user.id !== input.userId && user.role !== "ADMIN") {
+
+      const originalPost = await prisma.post.findUnique({
+        where: {
+          id,
+        },
+      });
+
+      if (originalPost == null) {
         return false;
       }
-      const { id, body, visible } = input;
+
+      if (user.id !== originalPost.userId && user.role !== "ADMIN") {
+        return false;
+      }
+
+      const isVisible = visible ?? true;
+
       await prisma.post.update({
         where: {
           id,
         },
         data: {
           body,
-          visible: user.role === "ADMIN" ? visible ?? false : true,
+          visible: user.role === "ADMIN" ? isVisible : true,
         },
       });
       return true;
     }),
 });
+
+export type GetPostOutput = RouterOutputs["post"]["getPosts"];
+export type GetProtectedPostOutput = RouterOutputs["post"]["getProtectedPosts"];

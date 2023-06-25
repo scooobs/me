@@ -15,7 +15,10 @@ const WallPage: NextPage = () => {
       </Head>
       <main className="flex min-h-full min-w-full flex-row">
         <div className="flex-1" />
-        <div className="flex flex-[2] flex-col gap-4">
+        <div
+          className="flex flex-[2] flex-col gap-4 break-words"
+          style={{ inlineSize: "50%" }}
+        >
           <div className="h-16" />
           <Wall />
           <div className="h-16" />

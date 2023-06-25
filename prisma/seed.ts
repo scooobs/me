@@ -7,6 +7,8 @@ async function main() {
   const uqId = "uq";
   const studyId = "study";
 
+  const postId = "post";
+
   const palantirPayload = {
     sectionId: employmentId,
     id: pltrId,
@@ -73,6 +75,20 @@ async function main() {
     },
     create: studyPayload,
     update: studyPayload,
+  });
+
+  await prisma.post.upsert({
+    where: {
+      id: postId,
+    },
+    create: {
+      body: "Testing post bro ,,....dsmkfjbejfewdiwemkenfhwecbwdn yeppers yep",
+      userId: "bingbangbosh",
+    },
+    update: {
+      body: "Testing post bro ,,....dsmkfjbejfewdiwemkenfhwecbwdn yeppers yep",
+      userId: "bingbangbosh",
+    },
   });
 }
 

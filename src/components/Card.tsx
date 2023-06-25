@@ -21,10 +21,10 @@ export const Card: React.FC<ICardProps> = ({ id }) => {
   const { data: cardData } = api.card.getCard.useQuery({
     id,
   });
+  const mutation = api.card.updateCard.useMutation();
 
   const [isEditing, setIsEditing] = React.useState<boolean>(false);
   const [isHovering, setIsHovering] = React.useState<boolean>(false);
-  const mutation = api.card.updateCard.useMutation();
 
   const title = React.useMemo(
     () => (cardData && cardData.card ? cardData.card.title : ""),
