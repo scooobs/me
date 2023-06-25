@@ -38,6 +38,7 @@ model Account {
     user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@unique([provider, providerAccountId])
+    @@index([userId])
 }
 
 model Session {
@@ -46,6 +47,8 @@ model Session {
     userId       String
     expires      DateTime
     user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
 }
 
 model User {
@@ -57,6 +60,7 @@ model User {
     accounts      Account[]
     sessions      Session[]
     role          Role      @default(USER)
+    Post          Post[]
 }
 
 model VerificationToken {
@@ -79,4 +83,18 @@ model Card {
     title     String
     subTitle  String?
     body      String  @db.Text
+
+    @@index([sectionId])
+}
+
+model Post {
+    id        String   @id @default(cuid())
+    user      User     @relation(fields: [userId], references: [id])
+    userId    String
+    body      String   @db.Text
+    visible   Boolean  @default(true)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([userId])
 }

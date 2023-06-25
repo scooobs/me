@@ -7,7 +7,7 @@ const cardIdSelector = Prisma.validator<Prisma.CardSelect>()({
   id: true,
 });
 
-const defaultSectionSelector = Prisma.validator<Prisma.SectionSelect>()({
+export const defaultSectionSelector = Prisma.validator<Prisma.SectionSelect>()({
   id: true,
   cards: { select: cardIdSelector },
 });
