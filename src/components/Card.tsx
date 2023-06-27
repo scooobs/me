@@ -1,9 +1,9 @@
-import { useSession } from "next-auth/react";
 import React from "react";
 import { z } from "zod";
 import { api } from "~/utils/api";
 
 import { TextArea } from "./wrappers/TextArea";
+import { useGlobalState } from "~/providers/StateProvider";
 
 interface ICardProps {
   id: string;
@@ -17,7 +17,8 @@ const formSchema = z.object({
 });
 
 export const Card: React.FC<ICardProps> = ({ id }) => {
-  const { data: session } = useSession();
+  const { isAdmin } = useGlobalState();
+
   const { data: cardData } = api.card.getCard.useQuery({
     id,
   });
@@ -37,10 +38,6 @@ export const Card: React.FC<ICardProps> = ({ id }) => {
   const body = React.useMemo(
     () => (cardData && cardData.card ? cardData.card.body : ""),
     [cardData]
-  );
-  const canEdit = React.useMemo(
-    () => session?.user.role === "ADMIN",
-    [session]
   );
 
   const enableEditing = (
@@ -124,7 +121,7 @@ export const Card: React.FC<ICardProps> = ({ id }) => {
       onMouseLeave={() => setIsHovering(false)}
       onSubmit={handleSubmit}
     >
-      {canEdit && editingPopup}
+      {isAdmin && editingPopup}
       {isEditing ? editableCard : uneditableCard}
     </form>
   );

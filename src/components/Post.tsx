@@ -5,6 +5,7 @@ import { api } from "~/utils/api";
 import { formatDateString } from "~/utils/shared";
 import { TextArea } from "./wrappers/TextArea";
 import { z } from "zod";
+import { useGlobalState } from "~/providers/StateProvider";
 
 interface IPostProps {
   post?: {
@@ -53,6 +54,7 @@ export const Post: React.FC<IPostProps> = ({ post }) => {
     }
   }
   const { data: session } = useSession();
+  const { state, isAdmin } = useGlobalState();
   const updatePost = api.post.updatePost.useMutation();
   const createPost = api.post.createPost.useMutation();
 
@@ -78,17 +80,19 @@ export const Post: React.FC<IPostProps> = ({ post }) => {
   }, [post]);
 
   const canEdit = React.useMemo(() => {
-    if (session == null || post == null) {
+    if (post == null) {
       return false;
     }
-    return session.user.role === "ADMIN" || post.user.id === session.user.id;
-  }, [post, session]);
+    return (
+      (isAdmin && state.adminModeEnabled) || post.user.id === session?.user.id
+    );
+  }, [isAdmin, post, session?.user.id, state.adminModeEnabled]);
 
   const userColor = React.useMemo(() => {
     if (post == null) {
-      return session?.user.role == "ADMIN" ? "text-red-700" : "text-sky-700";
+      return isAdmin ? "text-red-700" : "text-sky-700";
     }
-    if (post.user.role === "ADMIN") {
+    if (isAdmin) {
       return "text-red-700";
     }
     if (isMyPost) {
@@ -96,7 +100,7 @@ export const Post: React.FC<IPostProps> = ({ post }) => {
     }
 
     return "";
-  }, [isMyPost, post, session]);
+  }, [isAdmin, isMyPost, post]);
 
   const creatingPost = React.useMemo(() => {
     if (session == null) {
