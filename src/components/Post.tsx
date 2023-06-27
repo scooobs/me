@@ -92,7 +92,7 @@ export const Post: React.FC<IPostProps> = ({ post }) => {
     if (post == null) {
       return isAdmin ? "text-red-700" : "text-sky-700";
     }
-    if (isAdmin) {
+    if (post.user.role === "ADMIN") {
       return "text-red-700";
     }
     if (isMyPost) {
