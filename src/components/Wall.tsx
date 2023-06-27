@@ -7,24 +7,20 @@ import {
   type GetPostOutput,
   type GetProtectedPostOutput,
 } from "~/server/api/routers/post";
+import { useGlobalState } from "~/providers/StateProvider";
 
 export const Wall: React.FC = () => {
   const { data: session, status } = useSession();
+  const { state, setPartialState, isAdmin } = useGlobalState();
 
   const { data: publicPosts } = api.post.getPosts.useQuery();
   const { data: protectedPosts } = api.post.getProtectedPosts.useQuery();
 
-  const [showInvisiblePosts, setShowInvisiblePosts] =
-    React.useState<boolean>(false);
   const [searchResult, setSearchResult] = React.useState<string>("");
 
   const notAuthenticated = React.useMemo(
     () => status === "unauthenticated",
     [status]
-  );
-  const isAdmin = React.useMemo(
-    () => session?.user.role === "ADMIN",
-    [session]
   );
 
   const [myPost, basePosts] = React.useMemo(() => {
@@ -34,7 +30,7 @@ export const Wall: React.FC = () => {
     const derivedProtectedPosts = protectedPosts
       ? protectedPosts
       : ([] as GetProtectedPostOutput);
-    const basePosts = showInvisiblePosts
+    const basePosts = state.adminModeEnabled
       ? [...derivedPublicPosts, ...derivedProtectedPosts].sort(
           (a, b) => b.createdAt.valueOf() - a.createdAt.valueOf()
         )
@@ -51,7 +47,7 @@ export const Wall: React.FC = () => {
 
     // TODO: Deep compare these objects to actually see if they've changed.
     // If i deep compare i need to store value in state and use these as loaders :<(
-  }, [showInvisiblePosts, publicPosts, protectedPosts, session]);
+  }, [publicPosts, protectedPosts, state.adminModeEnabled, session]);
 
   const filteredPosts = React.useMemo(() => {
     if (!searchResult) {
@@ -74,10 +70,17 @@ export const Wall: React.FC = () => {
     }, []);
 
   const showInvisiblePostsOnClick: React.MouseEventHandler<HTMLDivElement> =
-    React.useCallback((_) => setShowInvisiblePosts((s) => !s), []);
+    React.useCallback(
+      (_) =>
+        setPartialState({
+          adminModeEnabled: !state.adminModeEnabled,
+        }),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [state.adminModeEnabled]
+    );
 
   const controls = React.useMemo(() => {
-    const filterPostColors = showInvisiblePosts
+    const filterPostColors = state.adminModeEnabled
       ? "bg-green-400 shadow-green-300"
       : "bg-red-400 shadow-red-300";
 
@@ -102,7 +105,12 @@ export const Wall: React.FC = () => {
         )}
       </div>
     );
-  }, [isAdmin, onChangeHandler, showInvisiblePosts, showInvisiblePostsOnClick]);
+  }, [
+    isAdmin,
+    onChangeHandler,
+    showInvisiblePostsOnClick,
+    state.adminModeEnabled,
+  ]);
 
   if (notAuthenticated) {
     return (
