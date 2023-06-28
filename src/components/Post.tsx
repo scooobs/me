@@ -1,4 +1,3 @@
-import type { User } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import React from "react";
 import { api } from "~/utils/api";
@@ -8,13 +7,7 @@ import { z } from "zod";
 import { useGlobalState } from "~/providers/StateProvider";
 
 interface IPostProps {
-  post?: {
-    user: User;
-    id: string;
-    body: string;
-    createdAt: Date;
-    updatedAt: Date;
-  };
+  postId?: string;
 }
 
 const updatePostSchema = z.object({
@@ -27,8 +20,7 @@ const createPostSchema = z.object({
   body: z.string(),
 });
 
-// TODO: Optimistic rendering, or just force reload
-export const Post: React.FC<IPostProps> = ({ post }) => {
+export const Post: React.FC<IPostProps> = ({ postId }) => {
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
@@ -55,7 +47,20 @@ export const Post: React.FC<IPostProps> = ({ post }) => {
   }
   const { data: session } = useSession();
   const { state, isAdmin } = useGlobalState();
-  const updatePost = api.post.updatePost.useMutation();
+  const utils = api.useContext();
+
+  const { data: post } = api.post.getPost.useQuery({ id: postId });
+  const updatePost = api.post.updatePost.useMutation({
+    onSuccess() {
+      if (postId == null) {
+        return;
+      }
+      utils.post.getPost
+        .invalidate({ id: postId })
+        .catch((e) => console.log(e));
+      return;
+    },
+  });
   const createPost = api.post.createPost.useMutation();
 
   const isMyPost = React.useMemo(() => {
@@ -197,9 +202,25 @@ export const Post: React.FC<IPostProps> = ({ post }) => {
     );
   }, [canEdit, hasBeenEdited, isEditing, post, userColor]);
 
-  return (
+  const shouldDisplay = React.useMemo(() => {
+    if (post == null || !state.searchResult) {
+      return true;
+    }
+
+    const { name } = post.user;
+
+    if (name == null) {
+      return false;
+    }
+
+    return name.toLowerCase().includes(state.searchResult.toLowerCase());
+  }, [post, state.searchResult]);
+
+  return shouldDisplay ? (
     <form className="flex flex-1 flex-col" onSubmit={handleSubmit}>
       {post == null ? creatingPost : notCreatingPost}
     </form>
+  ) : (
+    <></>
   );
 };

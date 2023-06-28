@@ -3,71 +3,41 @@ import Link from "next/link";
 import React from "react";
 import { api } from "~/utils/api";
 import { Post } from "./Post";
-import {
-  type GetPostOutput,
-  type GetProtectedPostOutput,
-} from "~/server/api/routers/post";
 import { useGlobalState } from "~/providers/StateProvider";
 
 export const Wall: React.FC = () => {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const { state, setPartialState, isAdmin } = useGlobalState();
-
-  const { data: publicPosts } = api.post.getPosts.useQuery();
-  const { data: protectedPosts } = api.post.getProtectedPosts.useQuery();
-
-  const [searchResult, setSearchResult] = React.useState<string>("");
+  const query = api.post.getPostIds.useQuery();
 
   const notAuthenticated = React.useMemo(
     () => status === "unauthenticated",
     [status]
   );
 
-  const [myPost, basePosts] = React.useMemo(() => {
-    const derivedPublicPosts = publicPosts
-      ? publicPosts
-      : ([] as GetPostOutput);
-    const derivedProtectedPosts = protectedPosts
-      ? protectedPosts
-      : ([] as GetProtectedPostOutput);
-    const basePosts = state.adminModeEnabled
-      ? [...derivedPublicPosts, ...derivedProtectedPosts].sort(
-          (a, b) => b.createdAt.valueOf() - a.createdAt.valueOf()
-        )
-      : derivedPublicPosts;
-
-    if (session == null) {
-      return [undefined, basePosts];
+  const [myPostId, basePostIds] = React.useMemo(() => {
+    const { data } = query;
+    if (data == null) {
+      return [undefined, []];
     }
 
-    return [
-      basePosts.find((p) => p.user.id === session.user.id),
-      basePosts.filter((p) => p.user.id != session.user.id),
-    ];
-
-    // TODO: Deep compare these objects to actually see if they've changed.
-    // If i deep compare i need to store value in state and use these as loaders :<(
-  }, [publicPosts, protectedPosts, state.adminModeEnabled, session]);
-
-  const filteredPosts = React.useMemo(() => {
-    if (!searchResult) {
-      return basePosts;
-    }
-
-    return basePosts.filter((b) =>
-      b.user.name?.toLowerCase().includes(searchResult)
-    );
-    // TODO: Deep compare baseposts? Maybe not needed since basePosts should deep compare itself
-  }, [basePosts, searchResult]);
+    return [data.userPostId, data.postIds];
+  }, [query]);
 
   const posts = React.useMemo(() => {
-    return filteredPosts.map((p) => <Post key={p.id} post={p} />);
-  }, [filteredPosts]);
+    return basePostIds.map((id) => <Post key={id} postId={id} />);
+  }, [basePostIds]);
 
   const onChangeHandler: React.ChangeEventHandler<HTMLInputElement> =
-    React.useCallback((e) => {
-      setSearchResult(e.target.value);
-    }, []);
+    React.useCallback(
+      (e) => {
+        setPartialState({
+          searchResult: e.target.value,
+        });
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      []
+    );
 
   const showInvisiblePostsOnClick: React.MouseEventHandler<HTMLDivElement> =
     React.useCallback(
@@ -124,7 +94,7 @@ export const Wall: React.FC = () => {
   return (
     <div className="flex flex-col gap-4">
       {controls}
-      {myPost ? <Post key={myPost.id} post={myPost} /> : <Post />}
+      {myPostId ? <Post key={myPostId} postId={myPostId} /> : <Post />}
       {posts}
     </div>
   );
