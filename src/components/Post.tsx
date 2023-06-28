@@ -49,7 +49,7 @@ export const Post: React.FC<IPostProps> = ({ postId }) => {
   const { state, isAdmin } = useGlobalState();
   const utils = api.useContext();
 
-  const { data: post } = api.post.getPost.useQuery({ id: postId });
+  const { data: post, isLoading } = api.post.getPost.useQuery({ id: postId });
   const updatePost = api.post.updatePost.useMutation({
     onSuccess() {
       if (postId == null) {
@@ -216,11 +216,13 @@ export const Post: React.FC<IPostProps> = ({ postId }) => {
     return name.toLowerCase().includes(state.searchResult.toLowerCase());
   }, [post, state.searchResult]);
 
-  return shouldDisplay ? (
+  if (!shouldDisplay || isLoading) {
+    return <></>;
+  }
+
+  return (
     <form className="flex flex-1 flex-col" onSubmit={handleSubmit}>
       {post == null ? creatingPost : notCreatingPost}
     </form>
-  ) : (
-    <></>
   );
 };
