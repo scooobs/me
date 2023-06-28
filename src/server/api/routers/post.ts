@@ -70,7 +70,7 @@ export const postRouter = createTRPCRouter({
       const { id } = input;
 
       if (id == null) {
-        return;
+        return null;
       }
 
       const post = await prisma.post.findUnique({
@@ -81,7 +81,7 @@ export const postRouter = createTRPCRouter({
       });
 
       if (!post?.visible && role !== "ADMIN") {
-        return;
+        return null;
       }
 
       return post;
