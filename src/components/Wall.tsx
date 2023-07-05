@@ -9,7 +9,6 @@ export const Wall: React.FC = () => {
   const { status } = useSession();
   const { state, setPartialState, isAdmin } = useGlobalState();
   const query = api.post.getPostIds.useQuery();
-  const { isLoading } = query;
 
   const notAuthenticated = React.useMemo(
     () => status === "unauthenticated",
@@ -95,12 +94,10 @@ export const Wall: React.FC = () => {
   return (
     <div className="flex flex-col gap-4">
       {controls}
-      {!isLoading && (
-        <>
-          {myPostId ? <Post key={myPostId} postId={myPostId} /> : <Post />}
-          {posts}
-        </>
-      )}
+      <>
+        {myPostId ? <Post key={myPostId} postId={myPostId} /> : <Post />}
+        {posts}
+      </>
     </div>
   );
 };

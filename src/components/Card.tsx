@@ -4,6 +4,7 @@ import { api } from "~/utils/api";
 
 import { TextArea } from "./wrappers/TextArea";
 import { useGlobalState } from "~/providers/StateProvider";
+import { CardSkeleton } from "./skeletons/CardSkeleton";
 
 interface ICardProps {
   id: string;
@@ -19,7 +20,7 @@ const formSchema = z.object({
 export const Card: React.FC<ICardProps> = ({ id }) => {
   const { isAdmin } = useGlobalState();
 
-  const { data: cardData } = api.card.getCard.useQuery({
+  const { data: cardData, isLoading } = api.card.getCard.useQuery({
     id,
   });
   const mutation = api.card.updateCard.useMutation();
@@ -78,8 +79,8 @@ export const Card: React.FC<ICardProps> = ({ id }) => {
   const uneditableCard = (
     <>
       <div className="text-sm font-semibold ">{title}</div>
-      <div className="text-xs opacity-70">{subTitle}</div>
-      <div className="pt-2 text-sm">{body}</div>
+      <div className="mt-1 text-xs opacity-70">{subTitle}</div>
+      <div className="mt-2 text-sm">{body}</div>
     </>
   );
 
@@ -103,18 +104,20 @@ export const Card: React.FC<ICardProps> = ({ id }) => {
       />
       <TextArea
         name={"subTitle"}
-        className="border-0 bg-transparent text-xs opacity-70 outline-0"
+        className="mt-1 border-0 bg-transparent text-xs opacity-70 outline-0"
         defaultValue={subTitle}
       />
       <TextArea
         name={"body"}
-        className="border-0 bg-transparent pt-2 text-sm outline-0"
+        className="mt-2 border-0 bg-transparent text-sm outline-0"
         defaultValue={body}
       />
     </>
   );
 
-  return (
+  return isLoading ? (
+    <CardSkeleton />
+  ) : (
     <form
       className="flex flex-1 flex-col"
       onMouseEnter={() => setIsHovering(true)}
