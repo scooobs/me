@@ -5,6 +5,7 @@ import { formatDateString } from "~/utils/shared";
 import { TextArea } from "./wrappers/TextArea";
 import { z } from "zod";
 import { useGlobalState } from "~/providers/StateProvider";
+import { PostSkeleton } from "./skeletons/PostSkeleton";
 
 interface IPostProps {
   postId?: string;
@@ -122,7 +123,7 @@ export const Post: React.FC<IPostProps> = ({ postId }) => {
         </div>
         <TextArea
           name={"body"}
-          className="ml-4 w-full border-0 bg-transparent outline-0"
+          className="ml-4 mt-1 w-full border-0 bg-transparent outline-0"
           placeholder="right here!"
         />
         <button
@@ -180,7 +181,7 @@ export const Post: React.FC<IPostProps> = ({ postId }) => {
         <input type="hidden" name={"id"} value={post.id} />
         <TextArea
           name={"body"}
-          className="ml-4 w-full border-0 bg-transparent outline-0"
+          className="ml-4 mt-1 w-full border-0 bg-transparent outline-0"
           defaultValue={post.body}
         />
       </>
@@ -216,8 +217,12 @@ export const Post: React.FC<IPostProps> = ({ postId }) => {
     return name.toLowerCase().includes(state.searchResult.toLowerCase());
   }, [post, state.searchResult]);
 
-  if (!shouldDisplay || isLoading) {
+  if (!shouldDisplay) {
     return <></>;
+  }
+
+  if (isLoading) {
+    return <PostSkeleton />;
   }
 
   return (
